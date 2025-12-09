@@ -5,14 +5,81 @@ from pathlib import Path
 
 def solve(data: str, part: int) -> int:
   lines = data.strip().splitlines()
-  return -1
+  tiles = [tuple(map(int, line.split(','))) for line in lines]
+  def area(ax: int, ay: int, bx: int, by: int) -> int:
+    return abs(ax-bx+1) * abs(ay-by+1)
+  if part == 1:
+    return max(area(a[0], a[1], b[0], b[1]) for a in tiles for b in tiles)
+  elif part == 2:
+    x0, x1, y0, y1 = (min(a[0] for a in tiles), max(a[0] for a in tiles), min(a[1] for a in tiles), max(a[1] for a in tiles))
+    # dialate so flood fill works
+    x0 -= 1
+    x1 += 2
+    y0 -= 1
+    y1 += 2
+    def arange(start: int, stop: int) -> iterator[int]:
+      if start <= stop:
+        return range(start, stop+1)
+      else:
+        return arange(stop, start)
+
+    def flood(grid: list[list[str]], x: int, y: int, src: str, dst: str):
+      if not (x0 <= x < x1 and y0 <= y < y1):
+        return
+      if grid[x-x0][y-y0] != src:
+        return
+      grid[x-x0][y-y0] = dst
+      flood(grid, x+1, y, src, dst)
+      flood(grid, x-1, y, src, dst)
+      flood(grid, x, y+1, src, dst)
+      flood(grid, x, y-1, src, dst)
+    
+    def show(grid: list[list[str]]):
+      for row in grid:
+        print(''.join(row))
+    
+    def check(grid: list[list[str]], ax: int, ay: int, bx: int, by: int) -> int:
+      for x in arange(ax, bx):
+        for y in arange(ay, by):
+          if grid[x-x0][y-y0] == ' ':
+            return -1
+      return area(ax, ay, bx, by)
+    
+    grid = [['.'] * (y1 - y0) for _ in range(x1 - x0)]
+    prev = tiles[-1]
+    for x, y in tiles:
+      xp, yp = prev
+      for xx in arange(xp, x):
+        grid[xx - x0][yp - y0] = 'g'
+      for yy in arange(yp, y):
+        grid[x - x0][yy - y0] = 'g'
+      prev = (x, y)
+    # show(grid)
+    # print()
+    flood(grid, x0, y0, '.', ' ')
+    # show(grid)
+    best = 0
+    for i,(ax, ay) in enumerate(tiles):
+      for bx, by in tiles[i+1:]:
+        if ax == bx and ay == by:
+          continue
+        best = max(best, check(grid, ax, ay, bx, by))
+    return best
 
 def main():
   puzzle = Puzzle(year=2025, day=int(Path(__file__).stem))
 
-  example = """"""
-  example_a_result = -7
-  example_b_result = -8
+  example = """7,1
+11,1
+11,7
+9,7
+9,5
+2,5
+2,3
+7,3
+"""
+  example_a_result = 50
+  example_b_result = 24
 
   v = solve(example, 1)
   print("Example A:", v)
