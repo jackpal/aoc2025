@@ -24,15 +24,18 @@ def solve(data: str, part: int) -> int:
         return arange(stop, start)
 
     def flood(grid: list[list[str]], x: int, y: int, src: str, dst: str):
-      if not (x0 <= x < x1 and y0 <= y < y1):
-        return
-      if grid[x-x0][y-y0] != src:
-        return
-      grid[x-x0][y-y0] = dst
-      flood(grid, x+1, y, src, dst)
-      flood(grid, x-1, y, src, dst)
-      flood(grid, x, y+1, src, dst)
-      flood(grid, x, y-1, src, dst)
+      active = set(((x, y),))
+      while active:
+        x, y = active.pop()
+        if not (x0 <= x < x1 and y0 <= y < y1):
+          continue
+        if grid[x-x0][y-y0] != src:
+          continue
+        grid[x-x0][y-y0] = dst
+        active.add((x+1, y))
+        active.add((x-1, y))
+        active.add((x, y+1))
+        active.add((x, y-1))
     
     def show(grid: list[list[str]]):
       for row in grid:
